@@ -5,7 +5,7 @@ const uploadImg = require("./uploadimg"); // Memanggil file uploadimg.js
 const kategori = require("./kategori"); // Memanggil file kategori.js
 
 // Ganti dengan token yang kamu dapatkan dari BotFather
-const token = "7890775366:AAHTxuW-r4k0M_uM7yqELzrOZWa46yuv3iI";
+const token = "7890775366:AAEfwfGl05jBcYkBY9hnKXPuz0wXwU47OVA";
 
 // Membuat bot dengan polling
 const bot = new TelegramBot(token, { polling: true });
@@ -36,11 +36,89 @@ const checkIfUserIsMember = (chatId) => {
   });
 };
 
-// Menyapa pengguna dengan menu utama saat mereka mulai chatting dengan bot
-bot.onText(/\/start/, async (msg) => {
+// Fungsi untuk memformat harga menjadi format Rupiah
+const formatRupiah = (harga) => {
+  return "Rp " + harga.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+// Fungsi untuk mengambil detail produk dari Supabase berdasarkan ID produk
+const getProductDetails = async (productId) => {
+  try {
+    const { data, error } = await supabase
+      .from("products") // Ganti dengan nama tabel produk Anda
+      .select("*")
+      .eq("id", productId)
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error("Error fetching product details:", error);
+    return null;
+  }
+};
+
+// Fungsi untuk menangani pesan /start
+bot.onText(/\/start(.*)/, async (msg, match) => {
   const chatId = msg.chat.id;
+  const productIdMatch = match[1].trim(); // Menangkap parameter yang dikirim setelah /start
 
   try {
+    // Jika ada parameter produk yang dikirim (format: ?start=produkid_{id})
+    if (productIdMatch.startsWith("produkid_")) {
+      const productId = productIdMatch.split("produkid_")[1]; // Mengambil ID produk dari parameter
+
+      // Ambil detail produk berdasarkan ID
+      const productDetails = await getProductDetails(productId);
+
+      if (productDetails) {
+        const formattedPrice = formatRupiah(productDetails.price); // Format harga produk menjadi Rupiah
+
+        const message = `
+          📦 *Detail HTML:*
+
+          🛍️ *Nama Produk:* ${productDetails.name}
+
+          📜 *Deskripsi:* 
+          ${productDetails.description}
+
+          💲 *Harga:* ${formattedPrice}
+
+          --------------------------------------
+
+          🎥 *Demo HTML:*
+          🎬 demo HTML langsung dengan klik tombol *Demo* di bawah ini.
+
+        `;
+
+        const options = {
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🎬 Demo HTML",
+                  url: `https://xcreate-store.web.app/?produkid=${productId}`,
+                }, // URL Demo produk
+              ],
+              [
+                { text: "💰 Beli HTML", url: "https://t.me/xcodedesain" }, // Tombol Beli ke channel
+              ],
+            ],
+          },
+        };
+
+        // Kirim detail produk ke pengguna dengan gambar dan tombol
+        bot.sendPhoto(chatId, productDetails.image_url, {
+          caption: message,
+          parse_mode: "Markdown",
+          ...options,
+        });
+      } else {
+        bot.sendMessage(chatId, "Produk tidak ditemukan.");
+      }
+      return;
+    }
+
     // Cek apakah pengguna sudah bergabung dengan channel
     const isMember = await checkIfUserIsMember(chatId);
 

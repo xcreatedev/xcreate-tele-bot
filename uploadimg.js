@@ -63,7 +63,7 @@ module.exports = (bot) => {
       .getFileLink(fileId)
       .then((fileLink) => {
         // Mengirimkan pesan dengan link gambar yang berhasil diupload
-        const message = `✨ **Gambar berhasil diupload!** ✨\n\nBerikut adalah **link gambar** yang telah diupload dan disimpan di server Telegram:\n\n📸 [Lihat Gambar di Web](${fileLink})\n\nUntuk menyalin link, tekan dan salin link di atas secara manual.\n\n🔙 Jika Anda ingin kembali ke menu utama, silakan tekan tombol di bawah ini.`;
+        const message = `✨ **Gambar berhasil diupload!** ✨\n\nBerikut adalah **link gambar** yang telah diupload dan disimpan di server Telegram:\n\n📸 [Lihat Gambar di Web](${fileLink})\n\nUntuk menyalin link, tekan tahan teks di atas dan salin link di atas secara manual.\n\n🔙 Jika Anda ingin kembali ke menu utama, silakan tekan tombol di bawah ini.`;
 
         bot.sendMessage(chatId, message, {
           parse_mode: "Markdown",
