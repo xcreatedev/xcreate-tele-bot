@@ -5,7 +5,7 @@ const uploadImg = require("./uploadimg");
 const kategori = require("./kategori");
 const buatBot = require("./buatbot");
 
-const token = "6479315189:AAHElOigPePPwHkhZXFaKjIqr2qRVoDh35U";
+const token = "7890775366:AAEfwfGl05jBcYkBY9hnKXPuz0wXwU47OVA";
 const bot = new TelegramBot(token, { polling: true });
 
 const supabase = createClient(
