@@ -208,7 +208,9 @@ module.exports = (bot, supabase) => {
         }
 
         // Memastikan URL gambar produk ada
-        const imageUrl = product.image_url || "https://gtftsindekhywtwmoeie.supabase.co/storage/v1/object/public/xcreate/tele.png"; // Gambar default jika tidak ada gambar
+        const imageUrl =
+          product.image_url ||
+          "https://gtftsindekhywtwmoeie.supabase.co/storage/v1/object/public/xcreate/tele.png"; // Gambar default jika tidak ada gambar
 
         // Kirim gambar terlebih dahulu
         bot.sendPhoto(chatId, imageUrl, { caption: product.name }).then(() => {
@@ -218,7 +220,9 @@ module.exports = (bot, supabase) => {
           }\n**Harga:** ${new Intl.NumberFormat("id-ID", {
             style: "currency",
             currency: "IDR",
-          }).format(product.price)}\n\n*Deskripsi:* \n${product.description}\n\nlink https://t.me/xcreatestore_bot=start?produkid_${product.id}`;
+          }).format(product.price)}\n\n*Deskripsi:* \n${
+            product.description
+          }\n\nlink https://t.me/xcreatestore_bot?start=produkid_${product.id}`;
 
           // Kirim pesan detail produk setelah gambar dikirim
           bot.sendMessage(chatId, message, {

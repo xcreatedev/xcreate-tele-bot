@@ -1,16 +1,13 @@
 const TelegramBot = require("node-telegram-bot-api");
 const { createClient } = require("@supabase/supabase-js");
-const paketapk = require("./paketapk"); // Memanggil file paketapk.js
-const uploadImg = require("./uploadimg"); // Memanggil file uploadimg.js
-const kategori = require("./kategori"); // Memanggil file kategori.js
+const paketapk = require("./paketapk");
+const uploadImg = require("./uploadimg");
+const kategori = require("./kategori");
+const buatBot = require("./buatbot");
 
-// Ganti dengan token yang kamu dapatkan dari BotFather
-const token = "7890775366:AAEfwfGl05jBcYkBY9hnKXPuz0wXwU47OVA";
-
-// Membuat bot dengan polling
+const token = "6479315189:AAHElOigPePPwHkhZXFaKjIqr2qRVoDh35U";
 const bot = new TelegramBot(token, { polling: true });
 
-// Inisialisasi Supabase Client
 const supabase = createClient(
   "https://gtftsindekhywtwmoeie.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd0ZnRzaW5kZWtoeXd0d21vZWllIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjQxMjM0MTgsImV4cCI6MjAzOTY5OTQxOH0.t8z_I35XrHpdHz3QzLo05HS4THlOefcPf8rZElC6P9o"
@@ -18,7 +15,7 @@ const supabase = createClient(
 
 const channelUsername = "@xcreatecode";
 
-// Fungsi untuk memeriksa apakah pengguna telah bergabung dengan channel
+// Fungsi untuk memeriksa apakah pengguna sudah bergabung dengan channel
 const checkIfUserIsMember = (chatId) => {
   return new Promise((resolve, reject) => {
     bot
@@ -45,7 +42,7 @@ const formatRupiah = (harga) => {
 const getProductDetails = async (productId) => {
   try {
     const { data, error } = await supabase
-      .from("products") // Ganti dengan nama tabel produk Anda
+      .from("products")
       .select("*")
       .eq("id", productId)
       .single();
@@ -61,7 +58,7 @@ const getProductDetails = async (productId) => {
 // Fungsi untuk menangani pesan /start
 bot.onText(/\/start(.*)/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const productIdMatch = match[1].trim(); // Menangkap parameter yang dikirim setelah /start
+  const productIdMatch = match[1].trim(); // Menangkap parameter produk setelah /start
 
   try {
     // Jika ada parameter produk yang dikirim (format: ?start=produkid_{id})
@@ -76,19 +73,18 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
 
         const message = `
           📦 *Detail HTML:*
-
+          
           🛍️ *Nama Produk:* ${productDetails.name}
-
+          
           📜 *Deskripsi:* 
           ${productDetails.description}
-
+          
           💲 *Harga:* ${formattedPrice}
-
+          
           --------------------------------------
-
+          
           🎥 *Demo HTML:*
           🎬 demo HTML langsung dengan klik tombol *Demo* di bawah ini.
-
         `;
 
         const options = {
@@ -98,11 +94,9 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
                 {
                   text: "🎬 Demo HTML",
                   url: `https://xcreate-store.web.app/?produkid=${productId}`,
-                }, // URL Demo produk
+                },
               ],
-              [
-                { text: "💰 Beli HTML", url: "https://t.me/xcodedesain" }, // Tombol Beli ke channel
-              ],
+              [{ text: "💰 Beli HTML", url: "https://t.me/xcodedesain" }],
             ],
           },
         };
@@ -137,43 +131,83 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
           ],
         },
       };
-      // Kirim pesan dengan tombol untuk bergabung
       bot.sendMessage(chatId, message, options);
       return;
     }
 
-    // Kirim menu utama setelah bergabung
-    const welcomeMessage = `🌟 *Halo ${msg.chat.first_name}! Selamat datang di bot kami.* Pilih menu di bawah ini untuk melanjutkan:\n\n📱 *Aplikasi XCreate* - Dapatkan informasi lebih lanjut.\n📸 *Upload Gambar* - Kirim gambar yang ingin Anda upload.\n📦 *Menu Paket Aplikasi* - Pilih paket aplikasi terbaik untuk Anda.`;
+    // Kirim sambutan dengan banner dan tombol menu
+    const welcomeMessage = `🌟 *Halo ${msg.chat.first_name}!* 🎉
+
+📜 \`Pilih menu berikut untuk melanjutkan:\``;
 
     const options = {
       reply_markup: {
-        inline_keyboard: [
-          [{ text: "🛒 XCreate Store", url: "https://xcreate-store.web.app/" }],
-          [{ text: "📦 Menu Paket Aplikasi", callback_data: "menu_paket" }],
-          [{ text: "📸 Upload Gambar", callback_data: "upload_image" }],
-          [{ text: "🔍 Kategori", callback_data: "kategori" }],
-        ],
+        inline_keyboard: [[{ text: "📝 Menu", callback_data: "menu" }]],
       },
     };
 
-    bot.sendMessage(chatId, welcomeMessage, {
-      parse_mode: "Markdown",
-      ...options,
-    });
+    // Kirim sambutan dengan banner
+    bot.sendPhoto(
+      chatId,
+      "https://gtftsindekhywtwmoeie.supabase.co/storage/v1/object/public/xcreate//xcl.jpg",
+      {
+        caption: welcomeMessage,
+        parse_mode: "Markdown",
+        ...options,
+      }
+    );
   } catch (error) {
     console.error("Error checking channel membership:", error);
     bot.sendMessage(chatId, "Terjadi kesalahan. Coba lagi nanti.");
   }
 });
 
-// Menggunakan modul paketapk untuk menangani menu paket aplikasi
+// Menangani tombol menu
+bot.on("callback_query", async (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+  const data = callbackQuery.data;
+
+  if (data === "menu") {
+    const menuMessage = `
+  🌟 *Selamat datang di Menu!* 🌟
+  
+  📝 *Pilih opsi yang diinginkan dengan menekan tombol di bawah ini:*
+  
+
+  1️⃣ *Buat Bot / Setting Bot* 🔧
+   \`- Buat balasan otomatis bot\`
+
+  2️⃣ *Store Script* 💻 
+  \`- solusi kebutuhan aplikasimu\`
+
+  3️⃣ *Gambar to URL* 🖼️ 
+  \`- hosting gambar\`
+  
+
+  _Silakan pilih salah satu opsi untuk melanjutkan._
+  `;
+
+    const options = {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "🤖 Buat / Setting Bot 🔧", callback_data: "buat_bot" },
+            { text: "🛒 Store Script 💻", callback_data: "kategori" },
+          ],
+          [{ text: "📸 Gambar To URL 🖼️", callback_data: "upload_image" }],
+        ],
+      },
+    };
+
+    // Kirim pesan dengan format Markdown untuk teks tebal, miring, dan kode
+    bot.sendMessage(chatId, menuMessage, { parse_mode: "Markdown", reply_markup: options.reply_markup });
+  }
+});
+
+// Menangani modul lain
 paketapk(bot);
-
-// Menangani perintah /start (mengganti perintah menjadi 'start' dan menampilkan menu utama)
-bot.setMyCommands([{ command: "start", description: "Mulai menggunakan bot" }]);
-
-// Menggunakan modul uploadImg untuk menangani upload gambar
 uploadImg(bot);
-
-// Menggunakan kategori untuk menangani tombol kategori
 kategori(bot, supabase);
+buatBot(bot);
+
+bot.setMyCommands([{ command: "start", description: "Mulai menggunakan bot" }]);

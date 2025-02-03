@@ -11,6 +11,8 @@
   "description": "",
   "dependencies": {
     "@supabase/supabase-js": "^2.47.16",
+    "child_process": "^1.0.2",
+    "express": "^4.21.2",
     "node-telegram-bot-api": "^0.66.0"
   }
 }
